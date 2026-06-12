@@ -31,3 +31,16 @@ flask run --debug               # ou : uv run flask run --debug
 ```
 
 L'API répond sur http://localhost:5000.
+
+## Développement
+
+Outillage qualité : [black](https://black.readthedocs.io/) (formatage) et
+[flake8](https://flake8.pycqa.org/) (lint), exécutés à chaque commit via
+[pre-commit](https://pre-commit.com/).
+
+```bash
+uv sync                        # installe aussi les outils de dev
+uv run pre-commit install      # active les hooks git
+uv run black .                 # formater
+uv run flake8                  # linter
+```
