@@ -25,6 +25,8 @@ markupsafe==3.0.3
     #   werkzeug
 pyjwt==2.13.0
     # via flask-api
+python-dotenv==1.2.2
+    # via flask-api
 sqlalchemy==2.0.50
     # via
     #   flask-api
