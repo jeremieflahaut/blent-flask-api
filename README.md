@@ -1,5 +1,7 @@
 # DigiMarket API
 
+[![CI](https://github.com/jeremieflahaut/blent-flask-api/actions/workflows/ci.yml/badge.svg)](https://github.com/jeremieflahaut/blent-flask-api/actions/workflows/ci.yml)
+
 API REST e-commerce (produits, commandes, utilisateurs) — Flask + SQLAlchemy + JWT.
 
 Projet du module Python — formation Blent LLM Engineer.
@@ -43,4 +45,5 @@ uv sync                        # installe aussi les outils de dev
 uv run pre-commit install      # active les hooks git
 uv run black .                 # formater
 uv run flake8                  # linter
+uv run pytest                  # lancer les tests
 ```
