@@ -1,6 +1,7 @@
 from flask import Flask
 
 from controllers.products import products
+from errors import register_error_handlers
 from models import db
 
 
@@ -18,4 +19,5 @@ def create_app(test_config=None):
 
     app.register_blueprint(products)
 
+    register_error_handlers(app)
     return app

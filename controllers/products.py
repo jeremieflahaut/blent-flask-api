@@ -1,43 +1,30 @@
-from functools import wraps
+from flask import Blueprint, request
 
-from flask import Blueprint
-
-from models import Product
+from errors import error_response
+from models import db, Product
 
 products = Blueprint("products", __name__, url_prefix="/api/produits")
 
 
-def error_response(message: str, code: int):
-    return {"error": message}, code
-
-
-def try_except(func):
-    """
-    Produit automatiquement une erreur 500 si une exception est levée
-    """
-
-    @wraps(func)
-    def wrapper(**kwargs):
-        try:
-            return func(**kwargs)
-        except Exception as e:
-            return error_response(str(e), 500)
-
-    return wrapper
-
-
 @products.route("", methods=["GET"])
-@try_except
 def index():
-    products_db = Product.query.all()
+    page = request.args.get("page", default=1, type=int)
+    per_page = request.args.get("per_page", default=10, type=int)
 
-    return [p.to_dict() for p in products_db]
+    pagination = db.paginate(db.select(Product), page=page, per_page=per_page)
+
+    return {
+        "items": [p.to_dict() for p in pagination.items],
+        "page": pagination.page,
+        "per_page": pagination.per_page,
+        "total": pagination.total,
+        "pages": pagination.pages,
+    }
 
 
 @products.route("/<int:product_id>", methods=["GET"])
-@try_except
 def show(product_id: int):
-    product = Product.query.get(product_id)
+    product = db.session.get(Product, product_id)
 
     if product is None:
         return error_response("Product not found", 404)
