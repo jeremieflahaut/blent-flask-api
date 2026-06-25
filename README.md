@@ -34,6 +34,15 @@ flask run --debug               # ou : uv run flask run --debug
 
 L'API répond sur http://localhost:5000.
 
+## Conventions
+
+- **Dates en UTC naïf.** Toutes les colonnes datetime (`created_at`, …) sont
+  stockées en **UTC sans information de fuseau** (`tzinfo` retiré). SQLite ne
+  conservant pas le fuseau, on évite ainsi tout mélange naïf/aware. Toute
+  comparaison de date doit donc se faire avec un « maintenant » UTC naïf :
+  `datetime.now(timezone.utc).replace(tzinfo=None)`. La conversion vers l'heure
+  locale se fait uniquement à l'affichage.
+
 ## Développement
 
 Outillage qualité : [black](https://black.readthedocs.io/) (formatage) et
