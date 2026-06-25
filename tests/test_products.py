@@ -29,7 +29,7 @@ def test_products_show(client):
     assert produit["id"] == 1
     assert produit["nom"] == "MSI Pro 16 Flex"
     assert produit["description"] is not None
-    assert produit["categorie"] is not None
+    assert produit["categorie"] == "Ordinateurs portables"
     assert produit["prix"] == 49.90
     assert produit["quantite_stock"] is not None
     assert produit["date_creation"] is not None
