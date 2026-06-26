@@ -27,6 +27,6 @@ def show(product_id: int):
     product = db.session.get(Product, product_id)
 
     if product is None:
-        return error_response("Product not found", 404)
+        return error_response("Produit introuvable", 404)
 
     return product.to_dict()

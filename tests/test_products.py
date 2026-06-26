@@ -38,4 +38,4 @@ def test_products_show(client):
 def test_products_show_404(client):
     response = client.get("/api/produits/5")
     assert response.status_code == 404
-    assert response.json["error"] == "Product not found"
+    assert response.json["error"] == "Produit introuvable"
