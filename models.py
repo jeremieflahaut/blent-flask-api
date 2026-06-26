@@ -94,8 +94,27 @@ class User(db.Model):
     password_hash = Column(String(100), nullable=False)
     name = Column(String(100), nullable=False)
     role = Column(String(100), nullable=False)
-    date_creation = Column(
+    created_at = Column(
         DateTime,
         nullable=False,
         default=lambda: datetime.now(timezone.utc).replace(tzinfo=None),
     )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "email": self.email,
+            "nom": self.name,
+            "role": self.role,
+            "date_creation": self.created_at.isoformat(),
+        }
+
+    def __repr__(self):
+        return (
+            f"<User("
+            f"id='{self.id}', "
+            f"email='{self.email}', "
+            f"nom='{self.name}', "
+            f"role='{self.role}', "
+            f"created_at='{self.created_at}')>"
+        )

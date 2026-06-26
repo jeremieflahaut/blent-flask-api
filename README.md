@@ -42,6 +42,13 @@ L'API répond sur http://localhost:5000.
   comparaison de date doit donc se faire avec un « maintenant » UTC naïf :
   `datetime.now(timezone.utc).replace(tzinfo=None)`. La conversion vers l'heure
   locale se fait uniquement à l'affichage.
+- **Règles de mot de passe** (validées à l'inscription, `POST /api/auth/register`) :
+  - **8 caractères minimum**,
+  - au moins **un chiffre**,
+  - au moins **un caractère spécial** (non alphanumérique).
+
+  Un mot de passe non conforme renvoie un `422` avec le détail des règles non
+  respectées sous la clé `details`.
 
 ## Développement
 
