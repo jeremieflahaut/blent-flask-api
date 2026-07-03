@@ -34,6 +34,26 @@ flask run --debug               # ou : uv run flask run --debug
 
 L'API répond sur http://localhost:5000.
 
+## Initialiser la base de données
+
+La base SQLite n'est pas versionnée : on la (re)génère avec un jeu de données de
+test via le script de seed (recrée la base à zéro à chaque exécution).
+
+```bash
+python seed.py                  # ou : uv run python seed.py
+```
+
+Le seed crée le catalogue (catégories + produits) et deux comptes de démonstration :
+
+| Rôle | Email | Mot de passe |
+|---|---|---|
+| Administrateur | `admin@digimarket.fr` | `admin1234!` |
+| Client | `client@digimarket.fr` | `client1234!` |
+
+Connectez-vous via `POST /api/auth/login` avec l'un de ces comptes pour obtenir un
+JWT et accéder aux routes protégées (le compte administrateur débloque la gestion
+du catalogue et des commandes).
+
 ## Conventions
 
 - **Dates en UTC naïf.** Toutes les colonnes datetime (`created_at`, …) sont

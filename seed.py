@@ -1,5 +1,7 @@
+from werkzeug.security import generate_password_hash
+
 from app import create_app
-from models import db, Product, Category
+from models import db, Product, Category, User
 
 app = create_app()
 
@@ -41,6 +43,23 @@ with app.app_context():
         ),
     ]
 
+    users = [
+        User(
+            email="admin@digimarket.fr",
+            password_hash=generate_password_hash("admin1234!"),
+            role="admin",
+            name="Admin DigiMarket",
+        ),
+        User(
+            email="client@digimarket.fr",
+            password_hash=generate_password_hash("client1234!"),
+            role="client",
+            name="Jean Client",
+        ),
+    ]
+
     db.session.add_all([cat_laptops, cat_peripherals])
     db.session.add_all(products)
+    db.session.add_all(users)
+
     db.session.commit()
