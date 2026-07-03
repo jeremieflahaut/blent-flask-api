@@ -1,11 +1,10 @@
 import pytest
 from sqlalchemy.exc import IntegrityError
-from models import db, Category
+from models import db
 
 
-def test_cannot_delete_category_with_products(app):
-    with app.app_context():
-        category = db.session.scalar(db.select(Category))
-        db.session.delete(category)
-        with pytest.raises(IntegrityError):
-            db.session.commit()
+def test_cannot_delete_category_with_products(app, products, categories):
+    category = categories["laptops"]
+    db.session.delete(category)
+    with pytest.raises(IntegrityError):
+        db.session.commit()
