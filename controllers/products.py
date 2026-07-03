@@ -11,7 +11,9 @@ def index():
     page = request.args.get("page", default=1, type=int)
     per_page = request.args.get("per_page", default=10, type=int)
 
-    pagination = db.paginate(db.select(Product), page=page, per_page=per_page)
+    pagination = db.paginate(
+        db.select(Product), page=page, per_page=per_page, error_out=False
+    )
 
     return {
         "items": [p.to_dict() for p in pagination.items],

@@ -1,4 +1,25 @@
-def test_products_index(client):
+def test_products_index_empty(client):
+    response = client.get("/api/produits")
+    assert response.status_code == 200
+
+    json = response.json
+    assert len(json["items"]) == 0
+
+
+def test_products_index_page_out_of_range(client):
+    response = client.get("/api/produits?page=2&per_page=2")
+    assert response.status_code == 200
+
+    json = response.json
+
+    assert json["page"] == 2
+    assert json["per_page"] == 2
+    assert json["total"] == 0
+    assert json["pages"] == 0
+    assert len(json["items"]) == 0
+
+
+def test_products_index(client, products):
     response = client.get("/api/produits?page=2&per_page=2")
     assert response.status_code == 200
 
@@ -20,7 +41,7 @@ def test_products_index(client):
         assert produit["date_creation"] is not None
 
 
-def test_products_show(client):
+def test_products_show(client, products):
     response = client.get("/api/produits/1")
     assert response.status_code == 200
 
