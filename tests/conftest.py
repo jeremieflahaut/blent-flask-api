@@ -9,6 +9,7 @@ def app():
     test_config = {
         "TESTING": True,
         "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
+        "JWT_SECRET": "9VbNEIFPM9itIDGqjAS6PXas4oDmhqwe",
     }
     app = create_app(test_config)
     with app.app_context():
