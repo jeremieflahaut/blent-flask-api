@@ -1,3 +1,6 @@
+from models import db, Product
+
+
 def test_products_index_empty(client):
     response = client.get("/api/produits")
     assert response.status_code == 200
@@ -50,7 +53,8 @@ def test_products_show(client, products):
     assert produit["id"] == 1
     assert produit["nom"] == "MSI Pro 16 Flex"
     assert produit["description"] is not None
-    assert produit["categorie"] == "Ordinateurs portables"
+    assert produit["categorie"]["id"] == 1
+    assert produit["categorie"]["nom"] == "Ordinateurs portables"
     assert produit["prix"] == 49.90
     assert produit["quantite_stock"] is not None
     assert produit["date_creation"] is not None
@@ -58,5 +62,228 @@ def test_products_show(client, products):
 
 def test_products_show_404(client):
     response = client.get("/api/produits/5")
+    assert response.status_code == 404
+    assert response.json["error"] == "Produit introuvable"
+
+
+def test_products_store_requires_authentication(client, make_product_payload):
+    response = client.post("/api/produits", json=make_product_payload())
+    assert response.status_code == 401
+
+
+def test_products_store_forbidden_for_client(
+    client, client_user, make_token, make_product_payload
+):
+    token = make_token(client_user)
+    response = client.post(
+        "/api/produits",
+        json=make_product_payload(),
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 403
+
+
+def test_products_store_ok_for_admin(
+    client, categories, admin_user, make_token, make_product_payload
+):
+    token = make_token(admin_user)
+    data = make_product_payload()
+    response = client.post(
+        "/api/produits",
+        json=data,
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 201
+
+    json = response.json
+    assert json["id"] is not None
+    assert json["nom"] == data["nom"]
+    assert json["prix"] == data["prix"]
+    assert json["categorie"]["id"] == categories["laptops"].id
+    assert json["categorie"]["nom"] == "Ordinateurs portables"
+
+    product = db.session.get(Product, json["id"])
+    assert product is not None
+    assert product.name == data["nom"]
+    assert product.price_cents == 99990
+    assert product.category_id == categories["laptops"].id
+
+
+def test_products_store_unknown_category(
+    client, admin_user, make_token, make_product_payload
+):
+    token = make_token(admin_user)
+    data = make_product_payload(category_id=9999)
+    response = client.post(
+        "/api/produits",
+        json=data,
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 422
+    assert response.json["error"] == "Catégorie introuvable"
+
+
+def test_products_store_missing_field(
+    client, admin_user, make_token, make_product_payload
+):
+    token = make_token(admin_user)
+    data = make_product_payload()
+    del data["nom"]
+    response = client.post(
+        "/api/produits",
+        json=data,
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 422
+    assert response.json["error"] == "Données invalides"
+    assert "nom" in response.json["details"]
+
+
+def test_products_store_negative_price(
+    client, admin_user, make_token, make_product_payload
+):
+    token = make_token(admin_user)
+    data = make_product_payload(prix=-5)
+    response = client.post(
+        "/api/produits",
+        json=data,
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 422
+    assert "prix" in response.json["details"]
+
+
+def test_products_store_unknown_field(
+    client, admin_user, make_token, make_product_payload
+):
+    token = make_token(admin_user)
+    data = make_product_payload(role="admin")
+    response = client.post(
+        "/api/produits",
+        json=data,
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 422
+    assert "role" in response.json["details"]
+
+
+def test_products_update_requires_authentication(
+    client, products, make_product_payload
+):
+    response = client.put("/api/produits/1", json=make_product_payload())
+    assert response.status_code == 401
+
+
+def test_products_update_forbidden_for_client(
+    client, products, client_user, make_token, make_product_payload
+):
+    token = make_token(client_user)
+    response = client.put(
+        "/api/produits/1",
+        json=make_product_payload(),
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 403
+
+
+def test_products_update_ok_for_admin(
+    client, products, admin_user, make_token, make_product_payload
+):
+    token = make_token(admin_user)
+    data = make_product_payload()
+    response = client.put(
+        "/api/produits/1",
+        json=data,
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+
+    json = response.json
+    assert json["id"] == 1
+    assert json["nom"] == data["nom"]
+    assert json["prix"] == data["prix"]
+
+    product = db.session.get(Product, 1)
+    assert product.name == data["nom"]
+    assert product.price_cents == 99990
+    assert product.stock_quantity == data["quantite_stock"]
+
+
+def test_products_update_404(client, admin_user, make_token, make_product_payload):
+    token = make_token(admin_user)
+    response = client.put(
+        "/api/produits/9999",
+        json=make_product_payload(),
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 404
+    assert response.json["error"] == "Produit introuvable"
+
+
+def test_products_update_unknown_category(
+    client, products, admin_user, make_token, make_product_payload
+):
+    token = make_token(admin_user)
+    data = make_product_payload(category_id=9999)
+    response = client.put(
+        "/api/produits/1",
+        json=data,
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 422
+    assert response.json["error"] == "Catégorie introuvable"
+
+
+def test_products_update_missing_field(
+    client, products, admin_user, make_token, make_product_payload
+):
+    token = make_token(admin_user)
+    data = make_product_payload()
+    del data["nom"]
+    response = client.put(
+        "/api/produits/1",
+        json=data,
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 422
+    assert "nom" in response.json["details"]
+
+
+def test_products_delete_requires_authentication(client, products):
+    response = client.delete("/api/produits/1")
+    assert response.status_code == 401
+
+
+def test_products_delete_forbidden_for_client(
+    client, products, client_user, make_token
+):
+    token = make_token(client_user)
+    response = client.delete(
+        "/api/produits/1",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 403
+
+
+def test_products_delete_ok_for_admin(client, products, admin_user, make_token):
+    token = make_token(admin_user)
+    response = client.delete(
+        "/api/produits/1",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 204
+    assert response.data == b""
+    assert db.session.get(Product, 1) is None
+
+
+def test_products_delete_404(client, admin_user, make_token):
+    token = make_token(admin_user)
+    response = client.delete(
+        "/api/produits/9999",
+        headers={"Authorization": f"Bearer {token}"},
+    )
     assert response.status_code == 404
     assert response.json["error"] == "Produit introuvable"

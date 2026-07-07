@@ -50,7 +50,7 @@ class Product(db.Model):
             "id": self.id,
             "nom": self.name,
             "description": self.description,
-            "categorie": self.category.name,
+            "categorie": {"id": self.category_id, "nom": self.category.name},
             "prix": self.price_euros,
             "quantite_stock": self.stock_quantity,
             "date_creation": self.created_at.isoformat(),
