@@ -87,6 +87,22 @@ def categories(app):
 
 
 @pytest.fixture
+def make_product_payload(categories):
+    def _make(**overrides):
+        data = {
+            "nom": "Dell XPS 13",
+            "description": "Ultrabook 13 pouces",
+            "category_id": categories["laptops"].id,
+            "prix": 999.90,
+            "quantite_stock": 10,
+        }
+        data.update(overrides)
+        return data
+
+    return _make
+
+
+@pytest.fixture
 def products(categories):
     products = [
         Product(
