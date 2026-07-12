@@ -26,6 +26,22 @@ def index():
     return items
 
 
+@orders.route("/<int:order_id>", methods=["GET"])
+@require_authentication
+def show(order_id: int):
+    order = db.session.get(Order, order_id)
+
+    if order is None:
+        return error_response("Commande introuvable", 404)
+
+    user = g.current_user
+
+    if user.role != "admin" and order.user_id != user.id:
+        return error_response("Accès refusé", 403)
+
+    return order.to_dict(lines=True)
+
+
 @orders.route("", methods=["POST"])
 @require_authentication
 @require_client

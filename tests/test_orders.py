@@ -1,5 +1,5 @@
 from constants import STATUT_EN_ATTENTE
-from models import db, Order, Product, User
+from models import db, Order, OrderLine, Product
 
 
 def test_orders_index_requires_authentication(client):
@@ -7,28 +7,13 @@ def test_orders_index_requires_authentication(client):
     assert response.status_code == 401
 
 
-def test_orders_index_client_sees_only_own(client, client_user, make_token):
-    other = User(
-        email="other@example.net",
-        password_hash="password",
-        role="client",
-        name="Autre",
-    )
-    db.session.add(other)
-    db.session.commit()
+def test_orders_index_client_sees_only_own(
+    client, client_user, make_user, make_token, make_order
+):
+    other = make_user(email="other@example.net", name="Autre")
 
-    own_order = Order(
-        user_id=client_user.id,
-        delivery_address="12 rue de la Paix",
-        status=STATUT_EN_ATTENTE,
-    )
-    other_order = Order(
-        user_id=other.id,
-        delivery_address="8 avenue des Champs",
-        status=STATUT_EN_ATTENTE,
-    )
-    db.session.add_all([own_order, other_order])
-    db.session.commit()
+    own_order = make_order(client_user)
+    make_order(other)
 
     token = make_token(client_user)
     response = client.get(
@@ -42,19 +27,11 @@ def test_orders_index_client_sees_only_own(client, client_user, make_token):
     assert response.json[0]["utilisateur"]["id"] == client_user.id
 
 
-def test_orders_index_admin_sees_all(client, admin_user, client_user, make_token):
-    own_order = Order(
-        user_id=client_user.id,
-        delivery_address="12 rue de la Paix",
-        status=STATUT_EN_ATTENTE,
-    )
-    other_order = Order(
-        user_id=admin_user.id,
-        delivery_address="8 avenue des Champs",
-        status=STATUT_EN_ATTENTE,
-    )
-    db.session.add_all([own_order, other_order])
-    db.session.commit()
+def test_orders_index_admin_sees_all(
+    client, admin_user, client_user, make_token, make_order
+):
+    make_order(client_user)
+    make_order(admin_user)
 
     token = make_token(admin_user)
     response = client.get(
@@ -64,6 +41,76 @@ def test_orders_index_admin_sees_all(client, admin_user, client_user, make_token
 
     assert response.status_code == 200
     assert len(response.json) == 2
+
+
+def test_orders_show_requires_authentication(client, client_user, make_order):
+    order = make_order(client_user)
+
+    response = client.get(f"/api/commandes/{order.id}")
+    assert response.status_code == 401
+
+
+def test_orders_show_owner_can_view(
+    client, client_user, make_token, make_order, products
+):
+    order = make_order(client_user)
+    order.order_lines.append(
+        OrderLine(
+            product=products[0],
+            quantity=2,
+            unit_price_cents=products[0].price_cents,
+        )
+    )
+    db.session.commit()
+
+    token = make_token(client_user)
+    response = client.get(
+        f"/api/commandes/{order.id}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    assert response.json["id"] == order.id
+    assert len(response.json["lignes"]) == 1
+
+
+def test_orders_show_forbidden_for_other_client(
+    client, client_user, make_user, make_token, make_order
+):
+    other = make_user(email="other@example.net", name="Autre")
+
+    order = make_order(other)
+
+    token = make_token(client_user)
+    response = client.get(
+        f"/api/commandes/{order.id}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 403
+
+
+def test_orders_show_admin_can_view_any(
+    client, admin_user, client_user, make_token, make_order
+):
+    order = make_order(client_user)
+
+    token = make_token(admin_user)
+    response = client.get(
+        f"/api/commandes/{order.id}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    assert response.json["id"] == order.id
+
+
+def test_orders_show_not_found(client, client_user, make_token):
+    token = make_token(client_user)
+    response = client.get(
+        "/api/commandes/9999",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 404
 
 
 def test_orders_store_requires_authentication(client, make_order_payload):
