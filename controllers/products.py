@@ -1,9 +1,9 @@
 from flask import Blueprint, request
-
 from errors import error_response
 from helpers import require_authentication, require_admin
 from models import db, Product, Category
 from schemas import ProductSchema
+from sqlalchemy import or_
 
 products = Blueprint("products", __name__, url_prefix="/api/produits")
 
@@ -13,9 +13,20 @@ def index():
     page = request.args.get("page", default=1, type=int)
     per_page = request.args.get("per_page", default=10, type=int)
 
-    pagination = db.paginate(
-        db.select(Product), page=page, per_page=per_page, error_out=False
-    )
+    search = request.args.get("search", default=None, type=str)
+
+    query = db.select(Product)
+
+    if search is not None:
+        for word in search.split():
+            query = query.where(
+                or_(
+                    Product.name.ilike(f"%{word}%"),
+                    Product.description.ilike(f"%{word}%"),
+                )
+            )
+
+    pagination = db.paginate(query, page=page, per_page=per_page, error_out=False)
 
     return {
         "items": [p.to_dict() for p in pagination.items],

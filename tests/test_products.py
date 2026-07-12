@@ -66,6 +66,45 @@ def test_products_show_404(client):
     assert response.json["error"] == "Produit introuvable"
 
 
+def test_products_search_by_name(client, products):
+    response = client.get("/api/produits?search=asus")
+    assert response.status_code == 200
+
+    json = response.json
+    assert json["total"] == 1
+    assert json["items"][0]["nom"] == "Asus TUF Gaming F15"
+
+
+def test_products_search_in_description(client, products):
+    response = client.get("/api/produits?search=ergonomique")
+    assert response.status_code == 200
+
+    json = response.json
+    assert json["total"] == 1
+    assert json["items"][0]["nom"] == "UGreen Souris sans fil"
+
+
+def test_products_search_case_insensitive(client, products):
+    response = client.get("/api/produits?search=ASUS")
+    assert response.status_code == 200
+    assert response.json["total"] == 1
+
+
+def test_products_search_multiple_words_and(client, products):
+    response = client.get("/api/produits?search=asus souris")
+    assert response.status_code == 200
+    assert response.json["total"] == 0
+
+
+def test_products_search_no_match(client, products):
+    response = client.get("/api/produits?search=xyzzy")
+    assert response.status_code == 200
+
+    json = response.json
+    assert json["total"] == 0
+    assert json["items"] == []
+
+
 def test_products_store_requires_authentication(client, make_product_payload):
     response = client.post("/api/produits", json=make_product_payload())
     assert response.status_code == 401
