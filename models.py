@@ -133,14 +133,18 @@ class Order(db.Model):
 
     user = db.relationship("User", backref="orders")
 
-    def to_dict(self):
-        return {
+    def to_dict(self, lines=False):
+        data = {
             "id": self.id,
             "utilisateur": {"id": self.user_id, "nom": self.user.name},
             "date_commande": self.order_date.isoformat(),
             "adresse_livraison": self.delivery_address,
             "statut": self.status,
         }
+
+        if lines:
+            data["lignes"] = [ligne.to_dict() for ligne in self.order_lines]
+        return data
 
     def __repr__(self):
         return (

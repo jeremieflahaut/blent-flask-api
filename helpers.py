@@ -55,3 +55,18 @@ def require_admin(f):
         return f(**kwargs)
 
     return wrapper
+
+
+def require_client(f):
+    @functools.wraps(f)
+    def wrapper(**kwargs):
+        user = g.get("current_user")
+        if user is None:
+            return error_response("Email ou mot de passe invalide", 401)
+
+        if user.role != "client":
+            return error_response("Accès refusé", 403)
+
+        return f(**kwargs)
+
+    return wrapper

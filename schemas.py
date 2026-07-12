@@ -77,3 +77,36 @@ class ProductSchema(Schema):
             "required": "stock_quantity requis",
         },
     )
+
+
+class OrderProductSchema(Schema):
+    produit_id = fields.Int(
+        required=True,
+        error_messages={
+            "required": "produit_id requis",
+        },
+    )
+    quantite = fields.Int(
+        required=True,
+        validate=Range(min=1, error="La quantité doit être de 1 ou plus"),
+        error_messages={
+            "required": "quantite requis",
+        },
+    )
+
+
+class OrderSchema(Schema):
+    produits = fields.List(
+        fields.Nested(OrderProductSchema),
+        required=True,
+        validate=Length(min=1, error="La commande doit contenir au moins un produit"),
+        error_messages={
+            "required": "produits requis",
+        },
+    )
+    adresse_livraison = fields.Str(
+        required=True,
+        error_messages={
+            "required": "adresse_livraison requis",
+        },
+    )

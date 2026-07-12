@@ -138,3 +138,19 @@ def products(categories):
     db.session.add_all(products)
     db.session.commit()
     return products
+
+
+@pytest.fixture
+def make_order_payload(products):
+    def _make(**overrides):
+        data = {
+            "adresse_livraison": "12 rue de la Paix",
+            "produits": [
+                {"produit_id": products[0].id, "quantite": 2},
+                {"produit_id": products[2].id, "quantite": 1},
+            ],
+        }
+        data.update(overrides)
+        return data
+
+    return _make
