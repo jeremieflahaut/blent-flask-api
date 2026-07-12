@@ -44,7 +44,7 @@ def store():
     product_schema = ProductSchema()
     data = product_schema.load(request.json)
 
-    category = db.session.get(Category, data["category_id"])
+    category = db.session.get(Category, data["categorie_id"])
     if category is None:
         return error_response("Catégorie introuvable", 422)
 
@@ -83,7 +83,7 @@ def update(product_id: int):
     if product is None:
         return error_response("Produit introuvable", 404)
 
-    category = db.session.get(Category, data["category_id"])
+    category = db.session.get(Category, data["categorie_id"])
     if category is None:
         return error_response("Catégorie introuvable", 422)
 

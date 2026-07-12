@@ -92,7 +92,7 @@ def make_product_payload(categories):
         data = {
             "nom": "Dell XPS 13",
             "description": "Ultrabook 13 pouces",
-            "category_id": categories["laptops"].id,
+            "categorie_id": categories["laptops"].id,
             "prix": 999.90,
             "quantite_stock": 10,
         }

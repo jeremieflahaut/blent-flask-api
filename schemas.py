@@ -58,9 +58,9 @@ class ProductSchema(Schema):
             "required": "description requis",
         },
     )
-    category_id = fields.Int(
+    categorie_id = fields.Int(
         required=True,
-        error_messages={"required": "category_id requis"},
+        error_messages={"required": "categorie_id requis"},
     )
     prix = fields.Decimal(
         places=2,

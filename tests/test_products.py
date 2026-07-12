@@ -153,7 +153,7 @@ def test_products_store_unknown_category(
     client, admin_user, make_token, make_product_payload
 ):
     token = make_token(admin_user)
-    data = make_product_payload(category_id=9999)
+    data = make_product_payload(categorie_id=9999)
     response = client.post(
         "/api/produits",
         json=data,
@@ -265,7 +265,7 @@ def test_products_update_unknown_category(
     client, products, admin_user, make_token, make_product_payload
 ):
     token = make_token(admin_user)
-    data = make_product_payload(category_id=9999)
+    data = make_product_payload(categorie_id=9999)
     response = client.put(
         "/api/produits/1",
         json=data,
