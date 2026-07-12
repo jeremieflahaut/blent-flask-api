@@ -1,6 +1,7 @@
 from flask import Flask
 from controllers.auth import auth
 from controllers.products import products
+from controllers.categories import categories
 from errors import register_error_handlers
 from models import db
 
@@ -21,6 +22,7 @@ def create_app(test_config=None):
 
     app.register_blueprint(auth)
     app.register_blueprint(products)
+    app.register_blueprint(categories)
 
     register_error_handlers(app)
     return app
