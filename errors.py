@@ -1,6 +1,13 @@
 from marshmallow import ValidationError
 
 
+class ApiError(Exception):
+    def __init__(self, message, code):
+        super().__init__(message)
+        self.message = message
+        self.code = code
+
+
 def error_response(message: str, code: int, details=None):
     body = {"error": message}
     if details is not None:
@@ -16,6 +23,11 @@ def validation_error(err):
     return error_response("Données invalides", 422, details=err.messages)
 
 
+def api_error(err):
+    return error_response(err.message, err.code)
+
+
 def register_error_handlers(app):
     app.register_error_handler(500, internal_server_error)
     app.register_error_handler(ValidationError, validation_error)
+    app.register_error_handler(ApiError, api_error)
