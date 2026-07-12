@@ -70,6 +70,25 @@ du catalogue et des commandes).
   Un mot de passe non conforme renvoie un `422` avec le détail des règles non
   respectées sous la clé `details`.
 
+## Choix techniques
+
+L'API suit la structure de données de référence du projet, avec deux écarts
+**délibérés** qui vont au-delà du schéma imposé sans en modifier le contrat :
+
+- **Catégorie modélisée comme une table liée** (et non un simple champ texte sur
+  le produit). La catégorie est une entité à part entière (`Category`), reliée aux
+  produits par une clé étrangère. Cela évite de dupliquer les libellés, garantit
+  leur cohérence, et permet d'exposer l'endpoint `GET /api/categories` pour la
+  navigation dans le catalogue.
+- **Prix stockés en centimes** (`Integer`) plutôt qu'en flottant. On n'utilise
+  jamais de `float` pour de la monnaie (erreurs d'arrondi : `0.1 + 0.2 != 0.3`).
+  Le montant est stocké en centimes et converti en euros à l'affichage — le
+  contrat de l'API reste un prix en euros, seule l'implémentation interne change.
+
+Par ailleurs, conformément à la référence, le **prix unitaire est figé sur la ligne
+de commande** (`prix_unitaire`) au moment de la commande : l'historique reste exact
+même si le prix du produit évolue ensuite.
+
 ## Développement
 
 Outillage qualité : [black](https://black.readthedocs.io/) (formatage) et
