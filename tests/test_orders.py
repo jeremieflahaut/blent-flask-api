@@ -1,5 +1,69 @@
 from constants import STATUT_EN_ATTENTE
-from models import db, Order, Product
+from models import db, Order, Product, User
+
+
+def test_orders_index_requires_authentication(client):
+    response = client.get("/api/commandes")
+    assert response.status_code == 401
+
+
+def test_orders_index_client_sees_only_own(client, client_user, make_token):
+    other = User(
+        email="other@example.net",
+        password_hash="password",
+        role="client",
+        name="Autre",
+    )
+    db.session.add(other)
+    db.session.commit()
+
+    own_order = Order(
+        user_id=client_user.id,
+        delivery_address="12 rue de la Paix",
+        status=STATUT_EN_ATTENTE,
+    )
+    other_order = Order(
+        user_id=other.id,
+        delivery_address="8 avenue des Champs",
+        status=STATUT_EN_ATTENTE,
+    )
+    db.session.add_all([own_order, other_order])
+    db.session.commit()
+
+    token = make_token(client_user)
+    response = client.get(
+        "/api/commandes",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    assert len(response.json) == 1
+    assert response.json[0]["id"] == own_order.id
+    assert response.json[0]["utilisateur"]["id"] == client_user.id
+
+
+def test_orders_index_admin_sees_all(client, admin_user, client_user, make_token):
+    own_order = Order(
+        user_id=client_user.id,
+        delivery_address="12 rue de la Paix",
+        status=STATUT_EN_ATTENTE,
+    )
+    other_order = Order(
+        user_id=admin_user.id,
+        delivery_address="8 avenue des Champs",
+        status=STATUT_EN_ATTENTE,
+    )
+    db.session.add_all([own_order, other_order])
+    db.session.commit()
+
+    token = make_token(admin_user)
+    response = client.get(
+        "/api/commandes",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    assert len(response.json) == 2
 
 
 def test_orders_store_requires_authentication(client, make_order_payload):

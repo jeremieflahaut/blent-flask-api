@@ -8,6 +8,24 @@ from constants import STATUT_EN_ATTENTE
 orders = Blueprint("orders", __name__, url_prefix="/api/commandes")
 
 
+@orders.route("", methods=["GET"])
+@require_authentication
+def index():
+    user = g.current_user
+
+    query = db.select(Order).order_by(Order.order_date.desc())
+
+    if user.role == "client":
+        query = query.where(Order.user_id == user.id)
+
+    items = []
+
+    for item in db.session.scalars(query):
+        items.append(item.to_dict())
+
+    return items
+
+
 @orders.route("", methods=["POST"])
 @require_authentication
 @require_client
