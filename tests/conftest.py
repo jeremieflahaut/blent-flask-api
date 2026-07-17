@@ -4,7 +4,8 @@ from flask import g
 from helpers import require_authentication, require_admin
 from models import db, Category, User
 from app import create_app
-from models import Product
+from models import Product, Order
+from constants import STATUT_EN_ATTENTE
 from datetime import datetime, timedelta, timezone
 
 
@@ -76,6 +77,24 @@ def admin_user(app):
 
 
 @pytest.fixture
+def make_user(app):
+    def _make(**overrides):
+        data = {
+            "email": "user@example.net",
+            "password_hash": "password",
+            "role": "client",
+            "name": "Utilisateur",
+        }
+        data.update(overrides)
+        user = User(**data)
+        db.session.add(user)
+        db.session.commit()
+        return user
+
+    return _make
+
+
+@pytest.fixture
 def categories(app):
     cats = {
         "laptops": Category(name="Ordinateurs portables"),
@@ -138,3 +157,34 @@ def products(categories):
     db.session.add_all(products)
     db.session.commit()
     return products
+
+
+@pytest.fixture
+def make_order_payload(products):
+    def _make(**overrides):
+        data = {
+            "adresse_livraison": "12 rue de la Paix",
+            "produits": [
+                {"produit_id": products[0].id, "quantite": 2},
+                {"produit_id": products[2].id, "quantite": 1},
+            ],
+        }
+        data.update(overrides)
+        return data
+
+    return _make
+
+
+@pytest.fixture
+def make_order(app):
+    def _make(user):
+        order = Order(
+            user_id=user.id,
+            delivery_address="12 rue de la Paix",
+            status=STATUT_EN_ATTENTE,
+        )
+        db.session.add(order)
+        db.session.commit()
+        return order
+
+    return _make
