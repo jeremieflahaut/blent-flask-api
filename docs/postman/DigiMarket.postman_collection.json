@@ -1,0 +1,290 @@
+{
+  "info": {
+    "name": "DigiMarket API",
+    "description": "Collection de démonstration de l'API DigiMarket (Flask + SQLAlchemy + JWT).\n\nUtilisation :\n1. Lancer l'API (`flask run`) et le seed (`python seed.py`).\n2. Exécuter une requête `Login` (client ou admin) : le token JWT est capturé automatiquement dans la variable de collection `token`.\n3. Les requêtes protégées utilisent `Authorization: Bearer {{token}}`.\n\nVariables de collection : `base_url` (défaut http://localhost:5000) et `token`.\n\nComptes seedés : admin@digimarket.fr / admin1234! — client@digimarket.fr / client1234!",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{token}}", "type": "string" }
+    ]
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:5000" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register (client)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"jean@example.fr\",\n  \"mot_de_passe\": \"Secret12!\",\n  \"nom\": \"Jean Client\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "auth", "register" ]
+            },
+            "description": "Crée un compte client. 201 avec l'utilisateur, 409 si l'email existe déjà, 422 si validation échoue."
+          }
+        },
+        {
+          "name": "Login (client)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data && data.token) {",
+                  "  pm.collectionVariables.set('token', data.token);",
+                  "  console.log('Token client capturé');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"client@digimarket.fr\",\n  \"mot_de_passe\": \"client1234!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "auth", "login" ]
+            },
+            "description": "Authentifie le client seedé. Le token est capturé dans {{token}}."
+          }
+        },
+        {
+          "name": "Login (admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data && data.token) {",
+                  "  pm.collectionVariables.set('token', data.token);",
+                  "  console.log('Token admin capturé');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@digimarket.fr\",\n  \"mot_de_passe\": \"admin1234!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "auth", "login" ]
+            },
+            "description": "Authentifie l'admin seedé. Exécuter cette requête avant les actions admin (créer/modifier produit, changer un statut de commande)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Catégories",
+      "item": [
+        {
+          "name": "Liste des catégories",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/categories",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "categories" ]
+            },
+            "description": "Public. Renvoie la liste des catégories."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Produits",
+      "item": [
+        {
+          "name": "Liste des produits",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/produits?page=1&per_page=10&search=clavier",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "produits" ],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "per_page", "value": "10" },
+                { "key": "search", "value": "clavier", "disabled": true }
+              ]
+            },
+            "description": "Public. Pagination (page, per_page) et recherche insensible à la casse (search, à activer)."
+          }
+        },
+        {
+          "name": "Détail d'un produit",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/produits/1",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "produits", "1" ]
+            },
+            "description": "Public. 404 si le produit n'existe pas."
+          }
+        },
+        {
+          "name": "Créer un produit (admin)",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom\": \"Écran Dell 27\\\"\",\n  \"description\": \"Moniteur QHD 27 pouces\",\n  \"categorie_id\": 2,\n  \"prix\": 249.90,\n  \"quantite_stock\": 12\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/produits",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "produits" ]
+            },
+            "description": "Admin. Nécessite le token admin (Login admin). 403 pour un client, 422 si validation échoue."
+          }
+        },
+        {
+          "name": "Modifier un produit (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom\": \"MSI Pro 16 Flex\",\n  \"description\": \"PC portable tactile 15.6 pouces (révisé)\",\n  \"categorie_id\": 1,\n  \"prix\": 54.90,\n  \"quantite_stock\": 25\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/produits/1",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "produits", "1" ]
+            },
+            "description": "Admin. 404 si le produit n'existe pas."
+          }
+        },
+        {
+          "name": "Supprimer un produit (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/produits/4",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "produits", "4" ]
+            },
+            "description": "Admin. 204 si supprimé, 404 si inexistant."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Commandes",
+      "item": [
+        {
+          "name": "Créer une commande (client)",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"adresse_livraison\": \"12 rue de la Paix, 75002 Paris\",\n  \"produits\": [\n    { \"produit_id\": 1, \"quantite\": 2 },\n    { \"produit_id\": 3, \"quantite\": 1 }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/commandes",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "commandes" ]
+            },
+            "description": "Client. Vérifie le stock (422 si insuffisant). Le stock n'est pas décrémenté à la création."
+          }
+        },
+        {
+          "name": "Liste des commandes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/commandes",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "commandes" ]
+            },
+            "description": "Authentifié. Admin : toutes les commandes. Client : uniquement les siennes."
+          }
+        },
+        {
+          "name": "Détail d'une commande",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/commandes/1",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "commandes", "1" ]
+            },
+            "description": "Propriétaire ou admin. Enveloppe de la commande (sans les lignes). 403 sinon, 404 si inexistante."
+          }
+        },
+        {
+          "name": "Lignes d'une commande",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/commandes/1/lignes",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "commandes", "1", "lignes" ]
+            },
+            "description": "Propriétaire ou admin. Liste des lignes : produit, quantité, prix unitaire figé."
+          }
+        },
+        {
+          "name": "Modifier le statut (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"statut\": \"validée\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/commandes/1",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "commandes", "1" ]
+            },
+            "description": "Admin. Transitions autorisées uniquement (sinon 422). Passage à `validée` = décrément du stock (tout-ou-rien) ; `validée` -> `annulée` = re-crédit."
+          }
+        }
+      ]
+    }
+  ]
+}

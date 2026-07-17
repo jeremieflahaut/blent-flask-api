@@ -76,6 +76,11 @@ du catalogue et des commandes).
 
 Base URL : `http://localhost:5000`. Requêtes et réponses en JSON.
 
+Une **collection Postman** prête à l'emploi est fournie dans
+`docs/postman/DigiMarket.postman_collection.json` : importez-la, lancez une
+requête *Login* (le token JWT est capturé automatiquement dans la variable
+`token`), puis exécutez les autres requêtes.
+
 ### Authentification
 
 L'authentification repose sur des **JWT**. On obtient un jeton via `POST /api/auth/login`,
