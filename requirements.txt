@@ -23,6 +23,8 @@ markupsafe==3.0.3
     #   flask
     #   jinja2
     #   werkzeug
+marshmallow==4.3.0
+    # via flask-api
 pyjwt==2.13.0
     # via flask-api
 python-dotenv==1.2.2
@@ -34,4 +36,6 @@ sqlalchemy==2.0.50
 typing-extensions==4.15.0
     # via sqlalchemy
 werkzeug==3.1.8
-    # via flask
+    # via
+    #   flask
+    #   flask-api
