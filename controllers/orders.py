@@ -1,9 +1,14 @@
 from errors import ApiError
 from flask import Blueprint, request, g
-from helpers import require_authentication, require_client
+from helpers import require_authentication, require_client, require_admin
 from models import Product, Order, OrderLine, db
-from schemas import OrderSchema
-from constants import STATUT_EN_ATTENTE
+from schemas import OrderSchema, OrderStatusSchema
+from constants import (
+    STATUT_EN_ATTENTE,
+    STATUT_VALIDEE,
+    STATUT_ANNULEE,
+    TRANSITIONS,
+)
 
 orders = Blueprint("orders", __name__, url_prefix="/api/commandes")
 
@@ -58,6 +63,35 @@ def show_lines(order_id: int):
         items.append(item.to_dict())
 
     return items
+
+
+@orders.route("/<int:order_id>", methods=["PATCH"])
+@require_authentication
+@require_admin
+def update_status(order_id: int):
+    order = get_order(order_id)
+
+    data = OrderStatusSchema().load(request.json)
+    new_status = data["statut"]
+
+    if new_status not in TRANSITIONS[order.status]:
+        raise ApiError("Transition non autorisée", 422)
+
+    if order.status == STATUT_EN_ATTENTE and new_status == STATUT_VALIDEE:
+        for line in order.order_lines:
+            if line.quantity > line.product.stock_quantity:
+                raise ApiError(f"Stock insuffisant pour {line.product.name}", 422)
+        for line in order.order_lines:
+            line.product.stock_quantity -= line.quantity
+
+    elif order.status == STATUT_VALIDEE and new_status == STATUT_ANNULEE:
+        for line in order.order_lines:
+            line.product.stock_quantity += line.quantity
+
+    order.status = new_status
+    db.session.commit()
+
+    return order.to_dict()
 
 
 @orders.route("", methods=["POST"])

@@ -1,5 +1,7 @@
 from marshmallow import Schema, fields
-from marshmallow.validate import Length, Regexp, Range
+from marshmallow.validate import Length, Regexp, Range, OneOf
+
+from constants import STATUTS
 
 
 class RegisterSchema(Schema):
@@ -108,5 +110,15 @@ class OrderSchema(Schema):
         required=True,
         error_messages={
             "required": "adresse_livraison requis",
+        },
+    )
+
+
+class OrderStatusSchema(Schema):
+    statut = fields.Str(
+        required=True,
+        validate=OneOf(STATUTS, error="statut invalide"),
+        error_messages={
+            "required": "statut requis",
         },
     )

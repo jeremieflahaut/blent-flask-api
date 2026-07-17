@@ -1,4 +1,9 @@
-from constants import STATUT_EN_ATTENTE
+from constants import (
+    STATUT_EN_ATTENTE,
+    STATUT_VALIDEE,
+    STATUT_EXPEDIEE,
+    STATUT_ANNULEE,
+)
 from models import db, Order, OrderLine, Product
 
 
@@ -172,6 +177,167 @@ def test_orders_lines_not_found(client, client_user, make_token):
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 404
+
+
+def test_orders_update_status_requires_authentication(client, client_user, make_order):
+    order = make_order(client_user)
+    response = client.patch(
+        f"/api/commandes/{order.id}", json={"statut": STATUT_VALIDEE}
+    )
+    assert response.status_code == 401
+
+
+def test_orders_update_status_forbidden_for_client(
+    client, client_user, make_token, make_order
+):
+    order = make_order(client_user)
+    token = make_token(client_user)
+    response = client.patch(
+        f"/api/commandes/{order.id}",
+        json={"statut": STATUT_VALIDEE},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 403
+
+
+def test_orders_update_status_not_found(client, admin_user, make_token):
+    token = make_token(admin_user)
+    response = client.patch(
+        "/api/commandes/9999",
+        json={"statut": STATUT_VALIDEE},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 404
+
+
+def test_orders_update_status_unknown_value(
+    client, admin_user, client_user, make_token, make_order
+):
+    order = make_order(client_user)
+    token = make_token(admin_user)
+    response = client.patch(
+        f"/api/commandes/{order.id}",
+        json={"statut": "livrée"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 422
+
+
+def test_orders_update_status_illegal_transition(
+    client, admin_user, client_user, make_token, make_order
+):
+    order = make_order(client_user)
+    token = make_token(admin_user)
+    response = client.patch(
+        f"/api/commandes/{order.id}",
+        json={"statut": STATUT_EXPEDIEE},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 422
+
+
+def test_orders_update_status_validates_and_decrements_stock(
+    client, admin_user, client_user, make_token, make_order, products
+):
+    order = make_order(client_user)
+    order.order_lines.append(
+        OrderLine(
+            product=products[0],
+            quantity=2,
+            unit_price_cents=products[0].price_cents,
+        )
+    )
+    db.session.commit()
+
+    token = make_token(admin_user)
+    response = client.patch(
+        f"/api/commandes/{order.id}",
+        json={"statut": STATUT_VALIDEE},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    assert response.json["statut"] == STATUT_VALIDEE
+    assert db.session.get(Product, products[0].id).stock_quantity == 18
+
+
+def test_orders_update_status_insufficient_stock(
+    client, admin_user, client_user, make_token, make_order, products
+):
+    order = make_order(client_user)
+    order.order_lines.append(
+        OrderLine(
+            product=products[0],
+            quantity=9999,
+            unit_price_cents=products[0].price_cents,
+        )
+    )
+    db.session.commit()
+
+    token = make_token(admin_user)
+    response = client.patch(
+        f"/api/commandes/{order.id}",
+        json={"statut": STATUT_VALIDEE},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 422
+    assert db.session.get(Product, products[0].id).stock_quantity == 20
+
+
+def test_orders_update_status_cancel_after_validation_recredits_stock(
+    client, admin_user, client_user, make_token, make_order, products
+):
+    order = make_order(client_user)
+    order.order_lines.append(
+        OrderLine(
+            product=products[0],
+            quantity=2,
+            unit_price_cents=products[0].price_cents,
+        )
+    )
+    db.session.commit()
+
+    token = make_token(admin_user)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    client.patch(
+        f"/api/commandes/{order.id}",
+        json={"statut": STATUT_VALIDEE},
+        headers=headers,
+    )
+    response = client.patch(
+        f"/api/commandes/{order.id}",
+        json={"statut": STATUT_ANNULEE},
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    assert db.session.get(Product, products[0].id).stock_quantity == 20
+
+
+def test_orders_update_status_cancel_without_validation_keeps_stock(
+    client, admin_user, client_user, make_token, make_order, products
+):
+    order = make_order(client_user)
+    order.order_lines.append(
+        OrderLine(
+            product=products[0],
+            quantity=2,
+            unit_price_cents=products[0].price_cents,
+        )
+    )
+    db.session.commit()
+
+    token = make_token(admin_user)
+    response = client.patch(
+        f"/api/commandes/{order.id}",
+        json={"statut": STATUT_ANNULEE},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    assert db.session.get(Product, products[0].id).stock_quantity == 20
 
 
 def test_orders_store_requires_authentication(client, make_order_payload):
