@@ -1,5 +1,5 @@
 from flask import Blueprint, request
-from errors import error_response
+from errors import ApiError
 from helpers import require_authentication, require_admin
 from models import db, Product, Category
 from schemas import ProductSchema
@@ -46,7 +46,7 @@ def store():
 
     category = db.session.get(Category, data["categorie_id"])
     if category is None:
-        return error_response("Catégorie introuvable", 422)
+        raise ApiError("Catégorie introuvable", 422)
 
     product = Product(
         name=data["nom"],
@@ -67,7 +67,7 @@ def show(product_id: int):
     product = db.session.get(Product, product_id)
 
     if product is None:
-        return error_response("Produit introuvable", 404)
+        raise ApiError("Produit introuvable", 404)
 
     return product.to_dict()
 
@@ -81,11 +81,11 @@ def update(product_id: int):
 
     product = db.session.get(Product, product_id)
     if product is None:
-        return error_response("Produit introuvable", 404)
+        raise ApiError("Produit introuvable", 404)
 
     category = db.session.get(Category, data["categorie_id"])
     if category is None:
-        return error_response("Catégorie introuvable", 422)
+        raise ApiError("Catégorie introuvable", 422)
 
     product.name = data["nom"]
     product.description = data["description"]
@@ -103,7 +103,7 @@ def delete(product_id: int):
     product = db.session.get(Product, product_id)
 
     if product is None:
-        return error_response("Produit introuvable", 404)
+        raise ApiError("Produit introuvable", 404)
 
     db.session.delete(product)
     db.session.commit()

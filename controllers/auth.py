@@ -3,7 +3,7 @@ from flask import Blueprint, request, jsonify, current_app
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime, timedelta, timezone
 
-from errors import error_response
+from errors import ApiError
 from models import User, db
 from werkzeug.security import generate_password_hash, check_password_hash
 from schemas import RegisterSchema, LoginSchema
@@ -29,7 +29,7 @@ def register():
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
-        return error_response("Email déjà utilisé", 409)
+        raise ApiError("Email déjà utilisé", 409)
 
     return user.to_dict(), 201
 
@@ -57,4 +57,4 @@ def login():
 
         return jsonify({"token": token}), 200
 
-    return error_response("Email ou mot de passe invalide", 401)
+    raise ApiError("Email ou mot de passe invalide", 401)
