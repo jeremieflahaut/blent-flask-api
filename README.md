@@ -213,3 +213,12 @@ uv run black .                 # formater
 uv run flake8                  # linter
 uv run pytest                  # lancer les tests
 ```
+
+Sans uv, pour lancer les tests, installez le runtime **et** les outils de dev
+(`requirements-dev.txt` ne contient que les outils de dev, pas les dépendances
+d'exécution) :
+
+```bash
+pip install -r requirements.txt -r requirements-dev.txt
+pytest
+```
