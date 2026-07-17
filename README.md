@@ -26,6 +26,22 @@ Alternative si vous utilisez [uv](https://docs.astral.sh/uv/) :
 uv sync
 ```
 
+## Configuration
+
+L'application lit sa configuration depuis un fichier `.env` (variables préfixées
+`FLASK_`). Ce fichier n'est **pas versionné** : créez-le à partir du modèle fourni
+et renseignez la clé secrète utilisée pour signer les JWT.
+
+```bash
+cp .env.example .env
+```
+
+Éditez ensuite `.env` pour donner une valeur à `FLASK_JWT_SECRET`, par exemple :
+
+```bash
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
 ## Lancer l'API
 
 ```bash
