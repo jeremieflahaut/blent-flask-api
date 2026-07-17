@@ -39,6 +39,9 @@ class Product(db.Model):
 
     @property
     def price_euros(self):
+        # Stocke le prix en centimes (Integer) pour éviter les erreurs
+        # d'arrondi des floats monétaires ; convertit en euros seulement
+        # à l'affichage.
         return self.price_cents / 100
 
     @price_euros.setter

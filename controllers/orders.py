@@ -78,6 +78,9 @@ def update_status(order_id: int):
         raise ApiError("Transition non autorisée", 422)
 
     if order.status == STATUT_EN_ATTENTE and new_status == STATUT_VALIDEE:
+        # Vérifie toutes les lignes avant de décrémenter quoi que ce soit :
+        # l'exception est levée avant le db.session.commit(), donc rien n'est
+        # persisté si une seule ligne manque de stock.
         for line in order.order_lines:
             if line.quantity > line.product.stock_quantity:
                 raise ApiError(f"Stock insuffisant pour {line.product.name}", 422)

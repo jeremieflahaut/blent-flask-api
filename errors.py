@@ -2,6 +2,13 @@ from marshmallow import ValidationError
 
 
 class ApiError(Exception):
+    """Erreur métier convertie en réponse HTTP par le handler global `api_error`.
+
+    On la lève (au lieu de retourner `error_response`) pour qu'elle remonte
+    depuis n'importe quelle couche — helper, contrôleur — sans que l'appelant
+    ait à la détecter ni à la relayer.
+    """
+
     def __init__(self, message, code):
         super().__init__(message)
         self.message = message
