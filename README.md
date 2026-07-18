@@ -154,6 +154,8 @@ Les erreurs de validation ajoutent le détail par champ sous `details` :
   "page": 1, "per_page": 10, "total": 1, "pages": 1 }
 ```
 
+`per_page` vaut 10 par défaut et est **plafonné à 25** — une valeur supérieure est ramenée à 25.
+
 **Créer une commande** — `POST /api/commandes` (client, JWT requis)
 ```json
 { "adresse_livraison": "12 rue de la Paix, 75002 Paris",

@@ -44,6 +44,16 @@ def test_products_index(client, products):
         assert produit["date_creation"] is not None
 
 
+def test_products_index_per_page_is_capped(client, products):
+    response = client.get("/api/produits?per_page=100000")
+    assert response.status_code == 200
+
+    json = response.json
+
+    # max_per_page=25 : la valeur demandée est ramenée au plafond
+    assert json["per_page"] == 25
+
+
 def test_products_show(client, products):
     response = client.get("/api/produits/1")
     assert response.status_code == 200

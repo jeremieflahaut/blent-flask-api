@@ -26,7 +26,9 @@ def index():
                 )
             )
 
-    pagination = db.paginate(query, page=page, per_page=per_page, error_out=False)
+    pagination = db.paginate(
+        query, page=page, per_page=per_page, max_per_page=25, error_out=False
+    )
 
     return {
         "items": [p.to_dict() for p in pagination.items],
