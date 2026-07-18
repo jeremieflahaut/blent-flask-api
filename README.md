@@ -159,8 +159,10 @@ Les erreurs de validation ajoutent le détail par champ sous `details` :
 { "adresse_livraison": "12 rue de la Paix, 75002 Paris",
   "produits": [ { "produit_id": 1, "quantite": 2 }, { "produit_id": 3, "quantite": 1 } ] }
 ```
-→ `201` avec la commande et ses lignes. La disponibilité du stock est vérifiée
-(`422` si un produit manque) ; le **stock n'est pas décrémenté** à la création.
+→ `201` avec la commande et ses lignes. Le **stock n'est pas décrémenté** à la
+création : on refuse tout de suite (`422`) une commande manifestement impossible,
+sans pour autant réserver le stock — la seule vérification qui fait foi reste
+celle de la validation.
 
 **Changer le statut** — `PATCH /api/commandes/{id}` (admin)
 ```json
