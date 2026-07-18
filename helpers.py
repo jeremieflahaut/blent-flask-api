@@ -43,6 +43,8 @@ def require_authentication(f):
 
 
 def require_admin(f):
+    """A utiliser APRES `require_authentication` (dépend de `g.current_user`)."""
+
     @functools.wraps(f)
     def wrapper(**kwargs):
         user = g.get("current_user")
@@ -58,6 +60,8 @@ def require_admin(f):
 
 
 def require_client(f):
+    """A utiliser APRES `require_authentication` (dépend de `g.current_user`)."""
+
     @functools.wraps(f)
     def wrapper(**kwargs):
         user = g.get("current_user")
